@@ -1,0 +1,23 @@
+services:
+  postgres-loans:
+    image: postgres:16
+    container_name: postgres-loans
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - loans_pgdata:/var/lib/postgresql/data
+
+  loan-service:
+    build: .
+    container_name: loan-service
+    env_file:
+      - .env
+    ports:
+      - "3004:3004"
+    depends_on:
+      - postgres-loans
+
+volumes:
+  loans_pgdata:
