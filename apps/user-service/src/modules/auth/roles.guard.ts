@@ -1,8 +1,13 @@
-import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from "@nestjs/common";
+import {
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+  Injectable,
+} from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { ROLES_KEY } from "./roles.decorator";
-import { IS_PUBLIC_KEY } from "./public.decorator";
 import type { JwtPayload } from "./jwt.strategy";
+import { AuthzConfigService } from "./authz-config.service";
 
 function normalizeRoles(user: JwtPayload | undefined): string[] {
   if (!user) return [];
@@ -12,14 +17,14 @@ function normalizeRoles(user: JwtPayload | undefined): string[] {
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private readonly authz: AuthzConfigService,
+  ) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) return true;
+    // ✅ DEV MODE: si auth está apagado, no bloquear por roles
+    if (!this.authz.authRequired()) return true;
 
     const required = this.reflector.getAllAndOverride<string[]>(ROLES_KEY, [
       context.getHandler(),
@@ -31,7 +36,10 @@ export class RolesGuard implements CanActivate {
     const req = context.switchToHttp().getRequest<{ user?: JwtPayload }>();
     const userRoles = normalizeRoles(req.user);
 
-    const ok = required.some((r) => userRoles.includes(String(r).toUpperCase()));
+    const ok = required.some((r) =>
+      userRoles.includes(String(r).toUpperCase()),
+    );
+
     if (!ok) throw new ForbiddenException("Insufficient role permissions.");
     return true;
   }
