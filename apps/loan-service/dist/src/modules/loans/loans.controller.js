@@ -14,6 +14,7 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LoansController = void 0;
 const common_1 = require("@nestjs/common");
+const passport_1 = require("@nestjs/passport");
 const loans_service_1 = require("./loans.service");
 const create_loan_dto_1 = require("./dto/create-loan.dto");
 const return_loan_dto_1 = require("./dto/return-loan.dto");
@@ -30,7 +31,7 @@ let LoansController = class LoansController {
         return this.service.listAllLoans();
     }
     async listMine(req) {
-        return this.service.listLoansByUser(req.user?.sub);
+        return this.service.listLoansByUser(req.user.sub);
     }
     async getById(id) {
         return this.service.getLoanById(id);
@@ -42,6 +43,7 @@ let LoansController = class LoansController {
 exports.LoansController = LoansController;
 __decorate([
     (0, common_1.Post)(),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt")),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
@@ -50,6 +52,7 @@ __decorate([
 ], LoansController.prototype, "create", null);
 __decorate([
     (0, common_1.Get)(),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt")),
     (0, roles_decorator_1.Roles)("ADMIN", "TECH"),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
@@ -57,6 +60,7 @@ __decorate([
 ], LoansController.prototype, "listAll", null);
 __decorate([
     (0, common_1.Get)("my"),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt")),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -64,6 +68,7 @@ __decorate([
 ], LoansController.prototype, "listMine", null);
 __decorate([
     (0, common_1.Get)(":id"),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt")),
     (0, roles_decorator_1.Roles)("ADMIN", "TECH"),
     __param(0, (0, common_1.Param)("id")),
     __metadata("design:type", Function),
@@ -72,6 +77,7 @@ __decorate([
 ], LoansController.prototype, "getById", null);
 __decorate([
     (0, common_1.Patch)(":id/return"),
+    (0, common_1.UseGuards)((0, passport_1.AuthGuard)("jwt")),
     (0, roles_decorator_1.Roles)("ADMIN", "TECH"),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)("id")),

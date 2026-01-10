@@ -26,7 +26,6 @@ import { Public } from "../auth/public.decorator";
 export class UsersController {
   constructor(private readonly users: UsersService) {}
 
-  // ✅ OPCIÓN A: endpoint público (sin token)
   @Post()
   @Public()
   @ApiOperation({ summary: "Create a new user (public registration)" })
@@ -66,12 +65,12 @@ export class UsersController {
     };
   }
 
-  @Get(":id")
-  @ApiOperation({ summary: "Get user by id" })
+   @Get("by-email/:email")
+  @ApiOperation({ summary: "Get user by email" })
   @ApiBearerAuth()
   @UseGuards(JwtOptionalGuard)
-  async get(@Param("id") id: string) {
-    const u = await this.users.getById(id);
+  async getByEmail(@Param("email") email: string) {
+    const u = await this.users.getByEmail(decodeURIComponent(email));
     return {
       id: u.id,
       username: u.username,
@@ -83,6 +82,8 @@ export class UsersController {
       updatedAt: u.updatedAt.toISOString(),
     };
   }
+
+
 
   @Patch(":id")
   @ApiOperation({ summary: "Update user (partial)" })

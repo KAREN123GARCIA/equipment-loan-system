@@ -17,15 +17,17 @@ let AppConfigService = class AppConfigService {
     constructor(config) {
         this.config = config;
     }
+    port() {
+        return Number(this.config.get("PORT") ?? 3004);
+    }
+    globalPrefix() {
+        return this.config.get("GLOBAL_PREFIX") ?? "api/v1";
+    }
     authRequired() {
-        const v = this.config.get("AUTH_REQUIRED", "true");
-        return String(v).toLowerCase() === "true";
+        return (this.config.get("AUTH_REQUIRED") ?? "true") === "true";
     }
     jwtSecret() {
-        const v = this.config.get("JWT_SECRET");
-        if (!v)
-            throw new Error("JWT_SECRET is missing in loan-service .env");
-        return v;
+        return this.config.get("JWT_SECRET") ?? "dev-secret-change-me";
     }
     jwtIssuer() {
         return this.config.get("JWT_ISSUER") ?? "auth-service";
@@ -33,36 +35,14 @@ let AppConfigService = class AppConfigService {
     jwtAudience() {
         return this.config.get("JWT_AUDIENCE") ?? "equipment-loan";
     }
-    port() {
-        return Number(this.config.get("PORT") ?? "3004");
-    }
-    globalPrefix() {
-        return this.config.get("GLOBAL_PREFIX") ?? "api/v1";
-    }
-    corsOrigins() {
-        const raw = this.config.get("CORS_ORIGINS") ?? "*";
-        return raw.split(",").map((s) => s.trim()).filter(Boolean);
-    }
-    databaseUrl() {
-        const v = this.config.get("DATABASE_URL");
-        if (!v)
-            throw new Error("DATABASE_URL is missing in loan-service .env");
-        return v;
-    }
     usersServiceUrl() {
-        const v = this.config.get("USERS_SERVICE_URL");
-        if (!v)
-            throw new Error("USERS_SERVICE_URL is missing in loan-service .env");
-        return v.replace(/\/+$/, "");
+        return this.config.get("USERS_SERVICE_URL") ?? "http://localhost:3001/api/v1";
     }
     inventoryServiceUrl() {
-        const v = this.config.get("INVENTORY_SERVICE_URL");
-        if (!v)
-            throw new Error("INVENTORY_SERVICE_URL is missing in loan-service .env");
-        return v.replace(/\/+$/, "");
+        return this.config.get("INVENTORY_SERVICE_URL") ?? "http://localhost:3003/api/v1";
     }
     httpTimeoutMs() {
-        return Number(this.config.get("HTTP_TIMEOUT_MS") ?? "5000");
+        return Number(this.config.get("HTTP_TIMEOUT_MS") ?? 5000);
     }
 };
 exports.AppConfigService = AppConfigService;

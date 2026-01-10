@@ -47,7 +47,8 @@ let LoansService = class LoansService {
         if (!effectiveUserId)
             throw new common_1.BadRequestException("Missing user id.");
         const authorization = this.forwardAuth(authHeader);
-        await this.assertUserExists(effectiveUserId, authorization);
+        const foundUser = await this.assertUserExists(effectiveUserId, authorization, user?.email);
+        const realUserId = dto.userId ?? foundUser?.id ?? effectiveUserId;
         const equipment = await this.getEquipment(dto.equipmentId, authorization);
         if (!equipment)
             throw new common_1.NotFoundException("Equipment not found.");
@@ -58,7 +59,7 @@ let LoansService = class LoansService {
         const dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
         const created = await this.prisma.loan.create({
             data: {
-                userId: effectiveUserId,
+                userId: realUserId,
                 equipmentId: dto.equipmentId,
                 status: client_1.LoanStatus.ACTIVE,
                 startDate,
@@ -110,12 +111,26 @@ let LoansService = class LoansService {
             throw new common_1.BadRequestException("Missing Authorization header.");
         return authHeader;
     }
-    async assertUserExists(userId, authorization) {
-        const url = `${this.cfg.usersServiceUrl()}/users/${userId}`;
+    async assertUserExists(userId, authorization, email) {
+        const headers = authorization ? { Authorization: authorization } : undefined;
         try {
-            await (0, rxjs_1.firstValueFrom)(this.http.get(url, {
-                headers: authorization ? { Authorization: authorization } : undefined,
-            }));
+            const byIdUrl = `${this.cfg.usersServiceUrl()}/users/${userId}`;
+            await (0, rxjs_1.firstValueFrom)(this.http.get(byIdUrl, { headers }));
+            return { id: userId };
+        }
+        catch (err) {
+            const status = err?.response?.status;
+            if (status !== 404) {
+                throw new common_1.HttpException({ message: "User validation failed (users-service).", details: this.safeErr(err) }, 502);
+            }
+        }
+        if (!email) {
+            throw new common_1.BadRequestException("User not found by id, and missing email for fallback validation.");
+        }
+        try {
+            const byEmailUrl = `${this.cfg.usersServiceUrl()}/users/by-email/${encodeURIComponent(email)}`;
+            const res = await (0, rxjs_1.firstValueFrom)(this.http.get(byEmailUrl, { headers }));
+            return res.data;
         }
         catch (err) {
             throw new common_1.HttpException({ message: "User validation failed (users-service).", details: this.safeErr(err) }, 502);

@@ -1,28 +1,24 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const common_1 = require("@nestjs/common");
 const core_1 = require("@nestjs/core");
+const config_1 = require("@nestjs/config");
 const app_module_1 = require("./modules/app.module");
-const app_config_service_1 = require("./modules/config/app-config.service");
 async function bootstrap() {
-    const app = await core_1.NestFactory.create(app_module_1.AppModule, { bufferLogs: true });
-    app.useGlobalPipes(new common_1.ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-    }));
-    const cfg = app.get(app_config_service_1.AppConfigService);
-    const origins = cfg.corsOrigins();
-    if (origins.includes("*")) {
-        app.enableCors({ origin: true, credentials: true });
+    const app = await core_1.NestFactory.create(app_module_1.AppModule);
+    const config = app.get(config_1.ConfigService);
+    const globalPrefix = config.get('GLOBAL_PREFIX') || 'api/v1';
+    app.setGlobalPrefix(globalPrefix);
+    const authRequired = config.get('AUTH_REQUIRED') === 'true';
+    if (!authRequired) {
+        app.use((req, _res, next) => {
+            const userId = req.headers['x-user-id'];
+            if (userId) {
+                req.user = { sub: userId, roles: ['ADMIN'] };
+            }
+            next();
+        });
     }
-    else {
-        app.enableCors({ origin: origins, credentials: true });
-    }
-    app.setGlobalPrefix(cfg.globalPrefix());
-    const port = cfg.port();
-    await app.listen(port);
-    console.log(`[loan-service] Listening on http://localhost:${port}/${cfg.globalPrefix()}`);
+    await app.listen(Number(config.get('PORT') || 3004));
 }
 bootstrap();
 //# sourceMappingURL=main.js.map

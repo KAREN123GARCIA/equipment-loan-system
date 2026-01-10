@@ -8,17 +8,24 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
-const app_config_module_1 = require("./config/app-config.module");
+const config_1 = require("@nestjs/config");
+const axios_1 = require("@nestjs/axios");
+const app_config_service_1 = require("../modules/config/app-config.service");
+const jwt_strategy_1 = require("../modules/authz/jwt.strategy");
 const prisma_module_1 = require("./prisma/prisma.module");
-const authz_module_1 = require("./authz/authz.module");
 const loans_module_1 = require("./loans/loans.module");
-const health_module_1 = require("./health/health.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [app_config_module_1.AppConfigModule, prisma_module_1.PrismaModule, authz_module_1.AuthzModule, loans_module_1.LoansModule, health_module_1.HealthModule],
+        imports: [
+            config_1.ConfigModule.forRoot({ isGlobal: true }),
+            axios_1.HttpModule,
+            prisma_module_1.PrismaModule,
+            loans_module_1.LoansModule,
+        ],
+        providers: [app_config_service_1.AppConfigService, jwt_strategy_1.JwtStrategy],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

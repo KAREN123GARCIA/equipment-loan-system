@@ -7,6 +7,8 @@ import { AppConfigService } from "../config/app-config.service";
 import { HttpService } from "@nestjs/axios";
 import { LoanStatus } from "@prisma/client";
 
+
+
 type JwtUser = { sub: string; roles?: string[]; email?: string };
 
 type InventoryEquipment = {
@@ -20,7 +22,7 @@ export class LoansService {
     private readonly prisma: PrismaService,
     private readonly cfg: AppConfigService,
     private readonly http: HttpService,
-  ) {}
+  ) { }
 
   async listAllLoans() {
     return this.prisma.loan.findMany({ orderBy: { createdAt: "desc" } });
@@ -46,7 +48,13 @@ export class LoansService {
 
     const authorization = this.forwardAuth(authHeader);
 
-    await this.assertUserExists(effectiveUserId, authorization);
+    const foundUser: any = await this.assertUserExists(
+      effectiveUserId,
+      authorization,
+      user?.email,
+    );
+
+    const realUserId = dto.userId ?? foundUser?.id ?? effectiveUserId;
 
     const equipment = await this.getEquipment(dto.equipmentId, authorization);
     if (!equipment) throw new NotFoundException("Equipment not found.");
@@ -59,7 +67,7 @@ export class LoansService {
 
     const created = await this.prisma.loan.create({
       data: {
-        userId: effectiveUserId,
+        userId: realUserId,
         equipmentId: dto.equipmentId,
         status: LoanStatus.ACTIVE,
         startDate,
@@ -83,6 +91,7 @@ export class LoansService {
 
     return created;
   }
+
 
   async returnLoan(_user: JwtUser, loanId: string, dto: ReturnLoanDto, authHeader?: string) {
     const authorization = this.forwardAuth(authHeader);
@@ -119,21 +128,40 @@ export class LoansService {
     return authHeader;
   }
 
-  private async assertUserExists(userId: string, authorization?: string) {
-    const url = `${this.cfg.usersServiceUrl()}/users/${userId}`;
-    try {
-      await firstValueFrom(
-        this.http.get(url, {
-          headers: authorization ? { Authorization: authorization } : undefined,
-        }),
-      );
-    } catch (err: any) {
+ private async assertUserExists(userId: string, authorization?: string, email?: string) {
+  const headers = authorization ? { Authorization: authorization } : undefined;
+
+  // 1) Intento por ID
+  try {
+    const byIdUrl = `${this.cfg.usersServiceUrl()}/users/${userId}`;
+    await firstValueFrom(this.http.get(byIdUrl, { headers }));
+    return { id: userId };
+  } catch (err: any) {
+    const status = err?.response?.status;
+    if (status !== 404) {
       throw new HttpException(
         { message: "User validation failed (users-service).", details: this.safeErr(err) },
         502,
       );
     }
   }
+
+  // 2) Fallback por email
+  if (!email) {
+    throw new BadRequestException("User not found by id, and missing email for fallback validation.");
+  }
+
+  try {
+    const byEmailUrl = `${this.cfg.usersServiceUrl()}/users/by-email/${encodeURIComponent(email)}`;
+    const res = await firstValueFrom(this.http.get(byEmailUrl, { headers }));
+    return res.data;
+  } catch (err: any) {
+    throw new HttpException(
+      { message: "User validation failed (users-service).", details: this.safeErr(err) },
+      502,
+    );
+  }
+}
 
   private async getEquipment(equipmentId: string, authorization?: string): Promise<InventoryEquipment> {
     const url = `${this.cfg.inventoryServiceUrl()}/equipment/${equipmentId}`;
