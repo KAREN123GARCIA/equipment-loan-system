@@ -1,0 +1,30 @@
+services:
+  mongo-notification:
+    image: mongo:7
+    container_name: mongo-notification
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongo_notification_data:/data/db
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    container_name: mailhog
+    ports:
+      - "8026:8025"
+      - "1026:1025"
+
+  notification-service:
+    build:
+      context: .
+    container_name: notification-service
+    env_file:
+      - .env
+    depends_on:
+      - mongo-notification
+      - mailhog
+    ports:
+      - "3006:3006"
+
+volumes:
+  mongo_notification_data:

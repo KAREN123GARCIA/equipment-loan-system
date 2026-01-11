@@ -1,0 +1,38 @@
+name: CI
+on:
+  push:
+    branches: [ "main", "develop" ]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    services:
+      mongo:
+        image: mongo:7
+        ports: [ "27017:27017" ]
+    env:
+      MONGODB_URI: mongodb://localhost:27017/notification_db
+      AUTH_REQUIRED: "false"
+      ENABLE_DEV_EVENTS: "true"
+      DEV_EVENTS_TOKEN: "test-token"
+      GLOBAL_PREFIX: "api/v1"
+      EMAIL_TRANSPORT: "console"
+      JWT_SECRET: "dev_only_change_me"
+      JWT_ISSUER: "auth-service"
+      JWT_AUDIENCE: "equipment-loan"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20" }
+      - run: npm ci || npm install
+      - run: npm run build
+      - run: npm test
+      - run: npm run test:e2e
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - run: docker build -t notification-service:ci .
