@@ -1,30 +1,38 @@
-FROM node:20-alpine AS deps
+# Etapa de dependencias (instala OpenSSL para Prisma)
+FROM node:20-bullseye-slim AS deps
 WORKDIR /app
+ENV NODE_ENV=development
+
+# Instalar herramientas y librerías necesarias para Prisma en tiempo de build
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends build-essential python3 libssl-dev ca-certificates \
+	&& rm -rf /var/lib/apt/lists/*
+
 RUN corepack enable
-
-# Copiamos solo lo necesario del servicio
-COPY package.json package-lock.json ./
-
-# Instalamos dependencias necesarias para build
+COPY package*.json ./
 RUN npm ci
 
-FROM node:20-alpine AS build
+# Etapa de build
+FROM node:20-bullseye-slim AS build
 WORKDIR /app
-COPY --from=deps /app /app
+RUN corepack enable
+COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-
-# Generar prisma (si aplica) y compilar
+# Genera cliente Prisma (si aplica) y compila el proyecto
 RUN npm run prisma:generate || true
 RUN npm run build
 
-FROM node:20-alpine AS runner
+# Etapa runtime ligera
+FROM node:20-bullseye-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+RUN corepack enable
 
-# Copiamos artefactos y deps de producción
-COPY --from=build /app/node_modules ./node_modules
+# Copiar artefactos
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/node_modules ./node_modules
+COPY package*.json ./
 
 EXPOSE 3002
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/src/main.js"]
