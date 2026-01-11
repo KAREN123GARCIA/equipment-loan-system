@@ -1,4 +1,5 @@
-version: '3.8'
+version: "3.8"
+
 services:
   postgres-loan:
     image: postgres:16
@@ -11,6 +12,8 @@ services:
       - "5436:5432"
     volumes:
       - postgres_loan_data:/var/lib/postgresql/data
+    networks:
+      - equipment-loan-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d loan_db"]
       interval: 5s
@@ -26,34 +29,18 @@ services:
       - .env
     ports:
       - "3004:3004"
+    networks:
+      - equipment-loan-network
     depends_on:
       postgres-loan:
         condition: service_healthy
     command: >
-      sh -c "npx prisma migrate deploy || true; node dist/src/main.js"
+      sh -c "npx prisma migrate deploy || true;
+             node $( [ -f dist/main.js ] && echo dist/main.js || echo dist/src/main.js )"
 
 volumes:
   postgres_loan_data:
-services:
-  postgres-loans:
-    image: postgres:16
-    container_name: postgres-loans
-    environment:
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5436:5432"
-    volumes:
-      - loans_pgdata:/var/lib/postgresql/data
 
-  loan-service:
-    build: .
-    container_name: loan-service
-    env_file:
-      - .env
-    ports:
-      - "3004:3004"
-    depends_on:
-      - postgres-loans
-
-volumes:
-  loans_pgdata:
+networks:
+  equipment-loan-network:
+    external: true

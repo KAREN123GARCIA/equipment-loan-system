@@ -11,6 +11,8 @@ services:
       - "5434:5432"
     volumes:
       - postgres_auth_data:/var/lib/postgresql/data
+    networks:
+      - equipment-loan-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d users_db"]
       interval: 5s
@@ -26,6 +28,8 @@ services:
       - .env
     ports:
       - "3002:3002"
+    networks:
+      - equipment-loan-network
     depends_on:
       postgres-auth:
         condition: service_healthy
@@ -34,3 +38,7 @@ services:
 
 volumes:
   postgres_auth_data:
+
+networks:
+  equipment-loan-network:
+    external: true

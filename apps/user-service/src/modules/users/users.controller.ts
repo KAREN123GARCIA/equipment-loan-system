@@ -65,7 +65,25 @@ export class UsersController {
     };
   }
 
-   @Get("by-email/:email")
+   @Get(":id")
+  @ApiOperation({ summary: "Get user by ID" })
+  @ApiBearerAuth()
+  @UseGuards(JwtOptionalGuard)
+  async getById(@Param("id") id: string) {
+    const u = await this.users.getById(id);
+    return {
+      id: u.id,
+      username: u.username,
+      email: u.email,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      status: u.status,
+      createdAt: u.createdAt.toISOString(),
+      updatedAt: u.updatedAt.toISOString(),
+    };
+  }
+
+  @Get("by-email/:email")
   @ApiOperation({ summary: "Get user by email" })
   @ApiBearerAuth()
   @UseGuards(JwtOptionalGuard)

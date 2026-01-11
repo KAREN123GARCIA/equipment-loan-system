@@ -1,0 +1,29 @@
+services:
+  postgres-reservation:
+    image: postgres:16
+    container_name: postgres-reservation
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5437:5432"
+    volumes:
+      - reservation_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  reservation-service:
+    build: .
+    container_name: reservation-service
+    env_file:
+      - .env
+    ports:
+      - "3005:3005"
+    depends_on:
+      postgres-reservation:
+        condition: service_healthy
+
+volumes:
+  reservation_pgdata:

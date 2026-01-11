@@ -8,9 +8,11 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - users_db_data:/var/lib/postgresql/data
+    networks:
+      - equipment-loan-network
 
   user-service:
     build:
@@ -23,8 +25,14 @@ services:
       - postgres-users
     ports:
       - "3001:3001"
+    networks:
+      - equipment-loan-network
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres-users:5432/users_db?schema=public
 
 volumes:
   users_db_data:
+
+networks:
+  equipment-loan-network:
+    external: true

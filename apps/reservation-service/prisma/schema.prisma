@@ -1,0 +1,40 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+  FULFILLED
+}
+
+model Reservation {
+  id          String            @id @default(uuid())
+  userId      String
+  equipmentId String
+  startAt     DateTime
+  endAt       DateTime
+  status      ReservationStatus @default(ACTIVE)
+  notes       String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([equipmentId, startAt, endAt])
+  @@index([userId, startAt, endAt])
+  @@map("reservations")
+}
+
+model EquipmentState {
+  equipmentId String   @id
+  status      String
+  updatedAt   DateTime @updatedAt
+
+  @@map("equipment_state")
+}

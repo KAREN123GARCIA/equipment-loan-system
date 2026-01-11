@@ -11,6 +11,8 @@ services:
       - "5435:5432"
     volumes:
       - postgres_inv_data:/var/lib/postgresql/data
+    networks:
+      - equipment-loan-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d inventory_db"]
       interval: 5s
@@ -26,6 +28,8 @@ services:
       - .env
     ports:
       - "3003:3003"
+    networks:
+      - equipment-loan-network
     depends_on:
       postgres-inv:
         condition: service_healthy
@@ -34,3 +38,7 @@ services:
 
 volumes:
   postgres_inv_data:
+
+networks:
+  equipment-loan-network:
+    external: true
