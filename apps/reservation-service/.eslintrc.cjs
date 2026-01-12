@@ -1,0 +1,1 @@
+module.exports = { root:true, env:{node:true,jest:true}, parserOptions:{ecmaVersion:2021,sourceType:'module'}, ignorePatterns:['dist','node_modules'], rules:{'no-console':'off'} };

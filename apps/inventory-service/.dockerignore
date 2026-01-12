@@ -1,0 +1,11 @@
+node_modules
+dist
+npm-debug.log
+.env
+.git
+Dockerfile
+docker-compose.yml
+pnpm-lock.yaml
+pnpm-workspace.yaml
+/.idea
+/.vscode

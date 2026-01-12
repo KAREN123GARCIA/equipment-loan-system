@@ -1,0 +1,38 @@
+version: "3.9"
+services:
+  postgres-users:
+    image: postgres:16
+    container_name: postgres-users
+    environment:
+      POSTGRES_DB: users_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - users_db_data:/var/lib/postgresql/data
+    networks:
+      - equipment-loan-network
+
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: user-service
+    env_file:
+      - .env
+    depends_on:
+      - postgres-users
+    ports:
+      - "3001:3001"
+    networks:
+      - equipment-loan-network
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres-users:5432/users_db?schema=public
+
+volumes:
+  users_db_data:
+
+networks:
+  equipment-loan-network:
+    external: true

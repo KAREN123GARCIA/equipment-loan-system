@@ -1,0 +1,33 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum EquipmentStatus {
+  AVAILABLE
+  LOANED
+  MAINTENANCE
+  DAMAGED
+}
+
+model Equipment {
+  id            String          @id @default(uuid())
+  assetTag      String          @unique
+  name          String
+  description   String?
+  category      String?
+  brand         String?
+  model         String?
+  serialNumber  String?
+  status        EquipmentStatus @default(AVAILABLE)
+  location      String?
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@map("equipment")
+}
