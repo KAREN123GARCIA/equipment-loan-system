@@ -2,7 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import helmet from 'helmet';
-import compression from 'compression';
+import * as compression from 'compression';
 import { AppModule } from './modules/app.module';
 import { setupSwagger } from './shared/swagger';
 import { HttpExceptionFilter } from './shared/http-exception.filter';

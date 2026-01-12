@@ -7,6 +7,7 @@ import { DeliveriesRepository } from './deliveries.repository';
 import { TemplatesModule } from '../templates/templates.module';
 import { MetricsModule } from '../metrics/metrics.module';
 import { EventsModule } from '../events/events.module';
+import { AuthzModule } from '../security/authz.module';
 import { RetryWorker } from './retry.worker';
 
 @Module({
@@ -15,6 +16,7 @@ import { RetryWorker } from './retry.worker';
     TemplatesModule,
     MetricsModule,
     EventsModule,
+    AuthzModule,
   ],
   controllers: [DeliveriesController],
   providers: [DeliveriesService, DeliveriesRepository, RetryWorker],

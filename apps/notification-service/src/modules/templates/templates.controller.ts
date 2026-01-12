@@ -11,10 +11,13 @@ import { RolesGuard } from '../security/roles.guard';
 @ApiBearerAuth()
 @Controller('templates')
 @UseGuards(JwtOptionalGuard, RolesGuard)
-@Roles('ADMIN', 'TECHNICIAN')
 export class TemplatesController {
   constructor(private readonly svc: TemplatesService) {}
-  @Post() create(@Body() dto: CreateTemplateDto) { return this.svc.create(dto); }
+  
+  @Post()
+  @Roles('ADMIN', 'TECHNICIAN')
+  create(@Body() dto: CreateTemplateDto) { return this.svc.create(dto); }
+  
   @Get() list() { return this.svc.list(); }
   @Get(':id') get(@Param('id') id: string) { return this.svc.get(id); }
   @Patch(':id') update(@Param('id') id: string, @Body() dto: UpdateTemplateDto) { return this.svc.update(id, dto); }
